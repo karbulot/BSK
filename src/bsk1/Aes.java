@@ -39,7 +39,6 @@ public class Aes {
         byte[] cipherText = new byte[cipher.getOutputSize(input.length)];
         int ctLength = cipher.update(input, 0, input.length, cipherText, 0);
         ctLength += cipher.doFinal(cipherText, ctLength);
-        
         System.out.println(new String(cipherText));
         System.out.println(ctLength);
         Files.write(new File(inputFile.toPath().getParent().toFile(),outputFileName).toPath(), cipherText);
@@ -51,26 +50,33 @@ public class Aes {
         cipher.init(Cipher.DECRYPT_MODE, key);
         byte[] plainText = new byte[cipher.getOutputSize(input.length)];
         int ptLength = cipher.update(input, 0, input.length, plainText, 0);
-        ptLength += cipher.doFinal(plainText, ptLength);
+        ptLength += cipher.doFinal(plainText, ptLength);    
+        System.out.println(new String(plainText));
+        System.out.println(ptLength);
         Files.write(new File(inputFile.toPath().getParent().toFile(),outputFileName).toPath(), plainText);
         System.out.println("Gotowe");
     }
     
     private static String generateXML(String algorithm, String keysize, String blocksize, String ciphermode, String iv, User[] users){
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?> \n" +
-            "<EncryptedFileHeader> \n" +
-            "<Algorithm>"+algorithm+"</Algorithm>\n" + "<KeySize>" + keysize + "</KeySize> \n " +
-            "<BlockSize>"+blocksize+"</BlockSize> \n" + "<CipherMode>"+ciphermode+"</CipherMode>" +
-            "<IV>" +iv+ " </IV>\n");
+        stringBuilder.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?> \n<EncryptedFileHeader> \n<Algorithm>")
+                .append(algorithm).append("</Algorithm>\n<KeySize>")
+                .append(keysize).append("</KeySize> \n <BlockSize>")
+                .append(blocksize).append("</BlockSize> \n<CipherMode>")
+                .append(ciphermode).append("</CipherMode><IV>").
+                append(iv).append(" </IV>\n");
         if (users.length!=0){
             stringBuilder.append("\t<ApprovedUsers>\n");
             for (User user : users){
-                stringBuilder.append("\t\t<User>\n<Email>"+user.getName()+"</Email>\n\t\t<SessionKey>"+user.getKey()+"</SessionKey>\n</User>\n");
+                stringBuilder.append("\t\t<User>\n<Email>")
+                        .append(user.getName()).append("</Email>\n\t\t<SessionKey>")
+                        .append(user.getKey()).append("</SessionKey>\n</User>\n");
             }
             stringBuilder.append("\t</ApprovedUsers>\n");
         }    
         stringBuilder.append("</EncryptedFileHeader> \n");
         return stringBuilder.toString();
     }
+    
+    
 }

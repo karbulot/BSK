@@ -15,8 +15,10 @@ import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
@@ -42,7 +44,10 @@ public class FXMLDocumentController implements Initializable {
     private ToggleGroup mode;
     @FXML
     private TextField outputNameTextField;
+    @FXML
+    private ProgressBar progressBar;
     private File file;
+    
     
     
     @FXML
@@ -55,6 +60,8 @@ public class FXMLDocumentController implements Initializable {
     
     @FXML
     private void encryptButtonAction(ActionEvent event) throws IOException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, ShortBufferException, BadPaddingException {
+        progressBar.setProgress(0);
+       
         if (ecbRadio.isSelected()){
             Aes.encryptEcb(file,outputNameTextField.getText());
         } else if (ofbRadio.isSelected()){
@@ -64,6 +71,7 @@ public class FXMLDocumentController implements Initializable {
         } else if (cfbRadio.isSelected()){
             
         }
+        progressBar.setProgress(100);
     }
     
     @FXML
