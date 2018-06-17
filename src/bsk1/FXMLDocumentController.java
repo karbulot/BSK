@@ -91,10 +91,11 @@ public class FXMLDocumentController implements Initializable {
     
     @FXML
     private void encryptButtonAction(ActionEvent event) throws IOException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, ShortBufferException, BadPaddingException {
+        List<User> selectedUsers = userTable.getSelectionModel().getSelectedItems();
         progressBar.setProgress(0);
        
         if (ecbRadio.isSelected()){
-            Aes.encryptEcb(file,outputNameTextField.getText());
+            Aes.encryptEcb(file,outputNameTextField.getText(),selectedUsers);
         } else if (ofbRadio.isSelected()){
             //Aes.encryptCbc(file,outputNameTextField.getText());
         } else if (cbcRadio.isSelected()){
@@ -103,19 +104,13 @@ public class FXMLDocumentController implements Initializable {
             
         }
         progressBar.setProgress(100);
+        messageLabel.setText("File encrypted successfully.");
     }
     
     @FXML
-    private void decryptButtonAction(ActionEvent event) throws IOException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, ShortBufferException, BadPaddingException {
-        if (ecbRadio.isSelected()){
-            Aes.decryptEcb(file,outputNameTextField.getText());
-        } else if (ofbRadio.isSelected()){
-            //Aes.decryptCbc(file,outputNameTextField.getText());
-        } else if (cbcRadio.isSelected()){
-            
-        } else if (cfbRadio.isSelected()){
-            
-        }
+    private void decryptButtonAction(ActionEvent event) throws IOException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, ShortBufferException, BadPaddingException, SAXException, ParserConfigurationException {
+        Aes.decrypt(file,outputNameTextField.getText(),currentUser);
+        messageLabel.setText("File decrypted successfully.");
         
     }
     

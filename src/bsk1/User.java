@@ -32,17 +32,11 @@ public class User {
     User(String name, byte[] password, byte[] encodedPublicKey, byte[] encodedPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
 
         this.name = name;
-        this.passwordHash = password;
-        //Key publicKey = new SecretKeySpec(encodedPublicKey,0,encodedPublicKey.length, "RSA");    
-        //Key privateKey = new SecretKeySpec(encodedPrivateKey,0,encodedPrivateKey.length, "RSA");  
-        //keyPair = new KeyPair((PublicKey)publicKey, (PrivateKey)privateKey);
-        
-        
+        this.passwordHash = password;        
         KeyFactory keyFactoryPriv = KeyFactory.getInstance("RSA");
         KeyFactory keyFactoryPubl = KeyFactory.getInstance("RSA");
         X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(encodedPublicKey);
         PublicKey publicKey = keyFactoryPriv.generatePublic(publicKeySpec);
-        System.out.println(encodedPrivateKey);
         PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(encodedPrivateKey);
         PrivateKey privateKey = keyFactoryPubl.generatePrivate(privateKeySpec);
         keyPair = new KeyPair(publicKey, privateKey);

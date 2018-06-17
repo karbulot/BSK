@@ -10,58 +10,104 @@ import java.nio.file.Paths;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Arrays;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.IvParameterSpec;
 import java.util.Base64;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.ShortBufferException;
+import org.w3c.dom.*;
+import javax.xml.parsers.*;
+import java.io.*;
+import java.security.KeyFactory;
+import org.xml.sax.SAXException;
 /**
  *
  * @author Admin
  */
-public class Aes {
-    static SecretKey key;
-    
-    public static void encryptEcb(File inputFile, final String outputFileName) throws IOException, NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, ShortBufferException, IllegalBlockSizeException, BadPaddingException{
+public class Aes {    
+    public static void encryptEcb(File inputFile, final String outputFileName, List<User> selectedUsers) throws IOException, NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, ShortBufferException, IllegalBlockSizeException, BadPaddingException{
+        SecretKey sessionKey = generateSessionKey();
+        List<byte[]> encryptedKeys = new ArrayList<>();
         byte[] input = Files.readAllBytes(inputFile.toPath());
-        KeyGenerator generator = KeyGenerator.getInstance("AES");
-        key = generator.generateKey();
         Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-        cipher.init(Cipher.ENCRYPT_MODE, key);
+        cipher.init(Cipher.ENCRYPT_MODE, sessionKey);
         byte[] cipherText = new byte[cipher.getOutputSize(input.length)];
         int ctLength = cipher.update(input, 0, input.length, cipherText, 0);
         ctLength += cipher.doFinal(cipherText, ctLength);
-        System.out.println(new String(cipherText));
-        System.out.println(ctLength);
-        Files.write(new File(inputFile.toPath().getParent().toFile(),outputFileName).toPath(), cipherText);
+//        System.out.println(new String(cipherText));
+ //       System.out.println(ctLength);
+        File outputFile = new File(inputFile.toPath().getParent().toFile(),outputFileName);
+        outputFile.delete();
+        outputFile.createNewFile();
+        FileOutputStream outputStream = new FileOutputStream(outputFile,true);
+        outputStream.write(generateXML(sessionKey.getAlgorithm(),"256",Integer.toString(ctLength),"ECB","0",selectedUsers,sessionKey, cipherText).getBytes());
+        //outputStream.write(cipherText);
         System.out.println("Gotowe");
     }
-    public static void decryptEcb(File inputFile, final String outputFileName) throws IOException, NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, ShortBufferException, IllegalBlockSizeException, BadPaddingException{
-        byte[] input = Files.readAllBytes(inputFile.toPath());
+    
+    public static void decrypt(File inputFile, final String outputFileName, User currentUser) throws IOException, NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, ShortBufferException, IllegalBlockSizeException, BadPaddingException, ParserConfigurationException, SAXException{
+        SecretKey sessionKey = null;
+        String algorithm, ciphermode;
+        int keySize, blockSize;
+        byte[] encryptedFile;
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document doc = builder.parse(inputFile);
+        doc.getDocumentElement().normalize();
+        NodeList nList = doc.getElementsByTagName("User");
+        boolean userFound = false;
+        for (int i = 0; i < nList.getLength(); i++) {
+            if (nList.item(i).getFirstChild().getNextSibling().getTextContent().equals(currentUser.getName())){
+                System.out.println(nList.item(i).getFirstChild().getNextSibling().getNextSibling().getNextSibling().getTextContent());
+                sessionKey = decryptSessionKey(nList.item(i).getFirstChild().getNextSibling().getNextSibling().getNextSibling().getTextContent().getBytes(),currentUser.getPrivateKey());
+                userFound = true;
+                break;
+            }
+        }
+        if (!userFound){
+            sessionKey = decryptSessionKey(doc.getElementsByTagName("SessionKey").item(0).getTextContent().getBytes(),currentUser.getPrivateKey());
+        }
+        
+        algorithm = doc.getElementsByTagName("Algorithm").item(0).getTextContent();
+        System.out.println(algorithm);
+        keySize = Integer.parseInt(doc.getElementsByTagName("KeySize").item(0).getTextContent());
+        blockSize = Integer.parseInt(doc.getElementsByTagName("BlockSize").item(0).getTextContent());
+        ciphermode = doc.getElementsByTagName("CipherMode").item(0).getTextContent();
+        encryptedFile = Base64.getDecoder().decode(doc.getElementsByTagName("Content").item(0).getTextContent().getBytes());
+        
+        //byte[] input = Files.readAllBytes(inputFile.toPath());
         Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-        cipher.init(Cipher.DECRYPT_MODE, key);
-        byte[] plainText = new byte[cipher.getOutputSize(input.length)];
-        int ptLength = cipher.update(input, 0, input.length, plainText, 0);
+        cipher.init(Cipher.DECRYPT_MODE, sessionKey);
+        byte[] plainText = new byte[cipher.getOutputSize(blockSize)];
+        int ptLength = cipher.update(encryptedFile, 0, blockSize, plainText, 0);
         ptLength += cipher.doFinal(plainText, ptLength);    
         System.out.println(new String(plainText));
         System.out.println(ptLength);
         Files.write(new File(inputFile.toPath().getParent().toFile(),outputFileName).toPath(), plainText);
         System.out.println("Gotowe");
+        
     }
-    
+    /*
         public static void encryptCbc(File inputFile, final String outputFileName) throws IOException, NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, ShortBufferException, IllegalBlockSizeException, BadPaddingException{
         byte[] input = Files.readAllBytes(inputFile.toPath());
         KeyGenerator generator = KeyGenerator.getInstance("AES");
         key = generator.generateKey();
-        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
         cipher.init(Cipher.ENCRYPT_MODE, key);
         byte[] cipherText = new byte[cipher.getOutputSize(input.length)];
         int ctLength = cipher.update(input, 0, input.length, cipherText, 0);
@@ -135,28 +181,59 @@ public class Aes {
         Files.write(new File(inputFile.toPath().getParent().toFile(),outputFileName).toPath(), plainText);
         System.out.println("Gotowe");
     }
+*/
     
-    private static String generateXML(String algorithm, String keysize, String blocksize, String ciphermode, String iv, User[] users, String content){
+    private static String generateXML(String algorithm, String keysize, String blocksize, String ciphermode, String iv, List<User> users, SecretKey sessionKey, byte[] content){
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?> \n<EncryptedFileHeader> \n<Algorithm>")
+        stringBuilder.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?> \n<EncryptedFile>\n<EncryptedFileHeader>\n<Algorithm>")
                 .append(algorithm).append("</Algorithm>\n<KeySize>")
-                .append(keysize).append("</KeySize> \n <BlockSize>")
-                .append(blocksize).append("</BlockSize> \n<CipherMode>")
+                .append(keysize).append("</KeySize>\n<BlockSize>")
+                .append(blocksize).append("</BlockSize>\n<CipherMode>")
                 .append(ciphermode).append("</CipherMode><IV>").
                 append(iv).append(" </IV>\n");
-        if (users.length!=0){
-            stringBuilder.append("\t<ApprovedUsers>\n");
+        if (!users.isEmpty()){
+            stringBuilder.append("\t<ApprovedUsers>");
             for (User user : users){
-                stringBuilder.append("\t\t<User>\n<Email>")
-                        .append(user.getName()).append("</Email>\n\t\t<SessionKey>")
-                        .append(user.getPublicKey()).append("</SessionKey>\n</User>\n");
+                try {
+                    stringBuilder.append("\n\t\t<User>\n\t\t<Email>")
+                            .append(user.getName()).append("</Email>\n\t\t<SessionKey>")
+                            .append(new String(encryptSessionKey(sessionKey,user.getPublicKey()))).append("</SessionKey>\n\t\t</User>\n");
+                } catch (NoSuchAlgorithmException ex) {
+                    Logger.getLogger(Aes.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (InvalidKeyException ex) {
+                    Logger.getLogger(Aes.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (NoSuchPaddingException ex) {
+                    Logger.getLogger(Aes.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (IllegalBlockSizeException ex) {
+                    Logger.getLogger(Aes.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (BadPaddingException ex) {
+                    Logger.getLogger(Aes.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
             stringBuilder.append("\t</ApprovedUsers>\n");
         }    
-        stringBuilder.append("</EncryptedFileHeader> \n");
-        stringBuilder.append("<Content>").append(content).append("</Content>");
+        stringBuilder.append("</EncryptedFileHeader>\n").append("<Content>").append(new String(Base64.getEncoder().encode(content))).append("</Content>\n</EncryptedFile>\n");
         return stringBuilder.toString();
     }
     
+    private static SecretKey generateSessionKey() throws NoSuchAlgorithmException{
+        KeyGenerator generator = KeyGenerator.getInstance("AES");
+        return generator.generateKey();
+    }
     
+    private static byte[] encryptSessionKey(SecretKey sessionKey, Key publicKey) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException{
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+        byte[] encodedKey = cipher.doFinal(sessionKey.getEncoded());
+        return Base64.getEncoder().encode(encodedKey);
+    }
+    
+        
+    private static SecretKey decryptSessionKey(byte[] base64EncodedKey, Key privateKey) throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException{
+        
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.DECRYPT_MODE, privateKey);
+        byte[] decodedKey = cipher.doFinal(Base64.getDecoder().decode(base64EncodedKey));
+        return new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
+    }
 }
