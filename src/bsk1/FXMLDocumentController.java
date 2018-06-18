@@ -67,7 +67,7 @@ public class FXMLDocumentController implements Initializable {
     @FXML
     private ToggleGroup mode;
     @FXML
-    private TextField outputNameTextField, userNameTextField, passwordTextField;
+    private TextField outputNameTextField, userNameTextField, passwordTextField, blockSizeTextField;
     @FXML
     private ProgressBar progressBar;
     @FXML
@@ -95,13 +95,13 @@ public class FXMLDocumentController implements Initializable {
         progressBar.setProgress(0);
        
         if (ecbRadio.isSelected()){
-            Aes.encryptEcb(file,outputNameTextField.getText(),selectedUsers);
-        } else if (ofbRadio.isSelected()){
-            //Aes.encryptCbc(file,outputNameTextField.getText());
+            Aes.encrypt(file,outputNameTextField.getText(),selectedUsers, "ECB", 128);
         } else if (cbcRadio.isSelected()){
-            
+            Aes.encrypt(file,outputNameTextField.getText(),selectedUsers, "CBC", 128);
+        } else if (ofbRadio.isSelected()){
+            Aes.encrypt(file,outputNameTextField.getText(),selectedUsers, "OFB", (int) Math.pow(2,Integer.parseInt(blockSizeTextField.getText())));
         } else if (cfbRadio.isSelected()){
-            
+            Aes.encrypt(file,outputNameTextField.getText(),selectedUsers, "CFB", (int) Math.pow(2,Integer.parseInt(blockSizeTextField.getText())));
         }
         progressBar.setProgress(100);
         messageLabel.setText("File encrypted successfully.");
@@ -116,6 +116,10 @@ public class FXMLDocumentController implements Initializable {
     
     @FXML
     private void addUserButtonAction(ActionEvent event) throws NoSuchAlgorithmException, IOException{
+        if (passwordTextField.getText().length() < 8){
+            messageLabel.setText("Password too short. Please use at least 8 characters.");
+            return;
+        }
         User user = new User(userNameTextField.getText(), passwordTextField.getText());
         System.out.println(user);
         users.add(user);
