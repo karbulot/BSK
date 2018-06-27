@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane id="AnchorPane" prefHeight="463.0" prefWidth="746.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="bsk1.FXMLDocumentController">
+    <children>
+        <Button fx:id="openButton" layoutX="20" layoutY="20" onAction="#openButtonAction" text="Open File..." />
+        <Label fx:id="fileLabel" layoutX="120.0" layoutY="20.0" minHeight="16" minWidth="69" text="No file chosen" />
+
+        <Button fx:id="runButton" layoutX="21.0" layoutY="154.0" onAction="#encryptButtonAction" text="Encrypt" />
+        <Label fx:id="outputFilenameLabel" layoutX="20.0" layoutY="125.0" minHeight="16" minWidth="69" text="Output filename:" />
+        <TextField fx:id="outputNameTextField" layoutX="121.0" layoutY="121.0" prefHeight="25.0" prefWidth="170.0" />
+      <RadioButton fx:id="ecbRadio" layoutX="65.0" layoutY="62.0" mnemonicParsing="false" selected="true" text="ECB">
+         <toggleGroup>
+            <ToggleGroup fx:id="mode" />
+         </toggleGroup>
+      </RadioButton>
+      <RadioButton fx:id="cbcRadio" layoutX="120.0" layoutY="62.0" mnemonicParsing="false" text="CBC" toggleGroup="$mode" />
+      <RadioButton fx:id="cfbRadio" layoutX="174.0" layoutY="62.0" mnemonicParsing="false" text="CFB" toggleGroup="$mode" />
+      <RadioButton fx:id="ofbRadio" layoutX="226.0" layoutY="62.0" mnemonicParsing="false" text="OFB" toggleGroup="$mode" />
+      <Label layoutX="22.0" layoutY="62.0" text="Mode:" />
+      <Label layoutX="20.0" layoutY="95.0" prefHeight="17.0" prefWidth="214.0" text="Block size (for CFB and OFB): 2^" />
+      <TextField fx:id="blockSizeTextField" layoutX="248.0" layoutY="91.0" prefHeight="25.0" prefWidth="43.0" text="2" />
+      <Button fx:id="decryptButton" layoutX="94.0" layoutY="154.0" mnemonicParsing="false" onAction="#decryptButtonAction" text="Decrypt" />
+      <TableView fx:id="userTable" layoutX="325.0" layoutY="42.0" prefHeight="200.0" prefWidth="235.0">
+        <columns>
+          <TableColumn fx:id="usernameColumn" prefWidth="234.0" text="Username" />
+        </columns>
+      </TableView>
+      <Button fx:id="addUserButton" layoutX="319.0" layoutY="343.0" mnemonicParsing="false" onAction="#addUserButtonAction" prefHeight="25.0" prefWidth="108.0" text="Add New User" />
+      <ProgressBar fx:id="progressBar" layoutX="21.0" layoutY="189.0" prefHeight="18.0" prefWidth="270.0" progress="0.0" />
+      <TextField fx:id="userNameTextField" layoutX="373.0" layoutY="257.0" prefHeight="25.0" prefWidth="188.0" />
+      <Label layoutX="325.0" layoutY="261.0" text="Name:" />
+      <Button fx:id="switchUserButton" layoutX="452.0" layoutY="343.0" mnemonicParsing="false" onAction="#switchUserButtonAction" prefHeight="25.0" prefWidth="108.0" text="Switch user" />
+      <Label layoutX="325.0" layoutY="291.0" text="Password:" />
+      <Label fx:id="currentUserLabelLabel" layoutX="329.0" layoutY="12.0" text="Current User:" />
+      <PasswordField fx:id="passwordTextField" layoutX="393.0" layoutY="287.0" prefHeight="25.0" prefWidth="170.0" />
+      <Label fx:id="currentUserLabel" layoutX="413.0" layoutY="12.0" text="default" />
+      <Label fx:id="messageLabel" layoutX="35.0" layoutY="421.0" text="Ready" />
+      <!--
+        deszyfrowywanie
+        odbiorcy
+        wielkość bloku
+      -->
+    </children>
+</AnchorPane>

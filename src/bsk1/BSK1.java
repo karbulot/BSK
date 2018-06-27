@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package bsk2;
+package bsk1;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -15,14 +15,12 @@ import javafx.stage.Stage;
  *
  * @author Admin
  */
-public class BSK2 extends Application {
+public class BSK1 extends Application {
     
     @Override
     public void start(Stage stage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("FXMLDocument.fxml"));
-        
         Scene scene = new Scene(root);
-        
         stage.setScene(scene);
         stage.show();
     }
